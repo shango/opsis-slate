@@ -1,6 +1,6 @@
 # Opsis Slate - After Effects Comp Duration Manager with Slate Generator
 
-A tool for managing composition durations and automatically generating slate frames in templated After Effects projects.
+A tool for managing composition durations and automatically generating a slate frame in templated After Effects projects.
 
 ## Installation
 
@@ -69,20 +69,25 @@ The script will:
 
 ### Project Name expression
 
+```jsx
 thisProject.fullPath.replace(/\\/g, "/").split("/").pop().replace(/\.[^\.]+$/, "")
+```
 
 ### Date / Time expresssion
 
+```jsx
 var d = new Date();
   d.getFullYear() + " / " + (d.getMonth()+1) + " / " + d.getDate() + " " + d.getHours() + ":" +
   d.getMinutes() + " PST"
-
+```
 ### Dimension expression
 
+```jsx
 comp("Output").width + " x " + comp("Output").height
-
+```
 ### Duration expression
 
+```jsx
 var c = comp("Output");
 var d = c.duration;                  // seconds
 var fps = Math.round(1 / c.frameDuration);
@@ -102,9 +107,47 @@ var fr = Math.floor((adjSeconds % 1) * fps);
 function pad(n) { return ("0" + n).slice(-2); }
 
 adjFrames + " F " + pad(h) + ":" + pad(m) + ":" + pad(s) + ":" + pad(fr) + " @" + fps + "fps";
-
+```
 
 ### Frame Range expression
 
+```jsx
 var c = comp("Output"); 
 Math.round(c.displayStartTime / c.frameDuration + c.displayStartTime) + " - " + Math.round((c.displayStartTime + c.duration) / c.frameDuration + c.displayStartTime - 1);
+```
+
+### Plate name expression
+
+```jsx
+// Get reference to the "Sequence" comp
+var sequenceComp = comp("Sequence");
+
+// Initialize variable to store footage layer name
+var footageName = "No footage found";
+
+// Loop through all layers in the Sequence comp
+for (var i = 1; i <= sequenceComp.numLayers; i++) {
+    var layer = sequenceComp.layer(i);
+    
+    // Check if it's not a solid, adjustment layer, or text layer
+    if (layer.source && 
+        !layer.adjustmentLayer && 
+        layer.source.typeName !== "Solid") {
+        
+        // Get the layer name and remove file extension
+        var layerName = layer.name;
+        var lastDotIndex = layerName.lastIndexOf(".");
+        
+        if (lastDotIndex > 0) {
+            footageName = layerName.substring(0, lastDotIndex);
+        } else {
+            footageName = layerName; // No extension found, use full name
+        }
+        
+        break; // Stop at first footage layer found
+    }
+}
+
+// Return the footage layer name without extension
+footageName;
+```

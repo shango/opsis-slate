@@ -450,19 +450,48 @@
                 var sourceText = layer.property("Source Text");
                 var templateText = layer.comment;
                 
-                // If comment is empty, this is the first run - store current text as template
+                // If comment is empty, this is the first run - store current text as template ONLY if it contains template variables
                 if (!templateText || templateText === "") {
-                    templateText = sourceText.value.text;
-                    layer.comment = templateText;
+                    var currentText = sourceText.value.text;
+                    var hasTemplateVars = false;
+                    
+                    // Check if current text contains any template variables
+                    for (var variable in templateVars) {
+                        if (currentText.indexOf(variable) !== -1) {
+                            hasTemplateVars = true;
+                            break;
+                        }
+                    }
+                    
+                    // Only store as template and process if it contains template variables
+                    if (hasTemplateVars) {
+                        layer.comment = currentText;
+                        templateText = currentText;
+                    } else {
+                        // Skip this layer - it doesn't have template variables
+                        continue;
+                    }
+                } else {
+                    // Check if stored template contains any template variables
+                    var hasTemplateVars = false;
+                    for (var variable in templateVars) {
+                        if (templateText.indexOf(variable) !== -1) {
+                            hasTemplateVars = true;
+                            break;
+                        }
+                    }
+                    
+                    // Skip if no template variables found
+                    if (!hasTemplateVars) {
+                        continue;
+                    }
                 }
                 
                 var updatedText = templateText;
                 
-                // Replace all template variables
+                // Replace all template variables (including blank ones)
                 for (var variable in templateVars) {
-                    if (templateVars[variable] !== "") {
-                        updatedText = updatedText.replace(new RegExp(escapeRegExp(variable), 'g'), templateVars[variable]);
-                    }
+                    updatedText = updatedText.replace(new RegExp(escapeRegExp(variable), 'g'), templateVars[variable]);
                 }
                 
                 // Update the text content only if it changed
