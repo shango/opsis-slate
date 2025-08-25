@@ -1,134 +1,153 @@
-# Opsis Slate - After Effects Duration Manager & Slate Generator
+# Opsis Slate - After Effects Comp Duration Manager with Slate Generator
 
-A professional tool for managing composition durations and automatically generating slate frames with project information in After Effects.
+A tool for managing composition durations and automatically generating a slate frame in templated After Effects projects.
 
 ## Installation
 
-### Download Files
+### Step 1: Download Files
 - `opsis-slate.jsx` - Main script file
 - `logo.jpg` - Your company logo (90x90 pixels) - *optional*
 
-### Install Script
+### Step 2: Install Script
 
-**Windows:**
+#### Windows:
 ```
-C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\ScriptUI Panels\
-```
-
-**macOS:**
-```
-/Applications/Adobe After Effects [Version]/Scripts/ScriptUI Panels/
+C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\script ui panel
 ```
 
-### Launch Panel
-Go to `Window > opsis-slate.jsx` to open the dockable panel.
+#### macOS:
+```
+/Applications/Adobe After Effects [Version]/Scripts/script ui panel
+```
 
-## Quick Start
+**For Dockable Panel:** Place in the `ScriptUI Panels` subfolder instead of `Scripts`
 
-### Required Project Setup
+### Step 3: Launch in After Effects
+
+**As Standard Script:**
+- Go to `File > Scripts > opsis-slate.jsx`
+
+**As Dockable Panel:**
+- Go to `Window > opsis-slate.jsx`
+
+## Project Setup
+
+### Required Compositions
+
 Your After Effects project must contain these compositions:
 
-| Comp Name | Purpose |
-|-----------|---------|
-| `Plate` | Source plate footage |
-| `working` | Working composition |
-| `Output*` | Final output compositions (can have multiple) |
-| `SLATE_TEMPLATE` | Slate graphics template |
+- `Sequence` - Source footage
+- `Working` - Working composition (contains Sequence)  
+- `Output` - Final output (Working starts at frame 2, slate on frame 1)
+- `SLATE_TEMPLATE` - Slate graphics template
 
-### Slate Template Setup
+### SLATE_TEMPLATE Setup
 
-1. **Create SLATE_TEMPLATE composition** matching your Output comp dimensions
-2. **Add 3 copies of Output comp** as layers (for frame previews)
-3. **Enable Time Remapping** on these 3 layers manually
-4. **Position them vertically** (top, middle, bottom) as frame previews
+Create a composition named `SLATE_TEMPLATE` containing:
 
-### Text Information Setup
+1. **Three instances of Working comp** with comments in their comment fields:
+   - One layer with comment: `FIRST`
+   - One layer with comment: `MIDDLE`
+   - One layer with comment: `LAST`
 
-The slate uses two types of information:
+2. **Text layers** for slate information (see Expressions section below)
 
-#### Automatic Information (Use AE Expressions)
-Create text layers with expressions for automatically updating information:
-
-- **Date:** `var d = new Date(); d.getFullYear() + " / " + (d.getMonth()+1) + " / " + d.getDate()`
-- **Project Name:** `thisProject.displayName` 
-- **Dimensions:** `thisComp.width + " x " + thisComp.height`
-- **Frame Rate:** `Math.round(thisComp.frameRate) + "fps"`
-
-#### User Input Information (Use Template Variables)
-Create text layers with template variables for user-controlled information:
-
-- **Artist:** `Artist: {{artist}}`
-- **Lens:** `Lens: {{lens}}mm`
-- **Comment:** `{{comment}}`
-
-**Important:** The original template text (with `{{variables}}`) is automatically stored in each layer's comment field, not visible in the viewport or expression editor.
-
-### Add Slate to Output Compositions
-Manually add the SLATE_TEMPLATE as a layer to each Output composition at frame 1000.
+3. **Time Remap effects** should be enabled on the three Working comp layers
 
 ## Usage
 
-1. **Open the Opsis Slate panel** (Window > opsis-slate.jsx)
-2. **Enter information:**
-   - Duration (in frames)
-   - Lens information
-   - Artist name
-   - Comment/notes
-3. **Click "Create or Update Slate"**
+1. **Set Duration:** Enter frame count, click "Set Duration"
+2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"  
+3. **Version Up:** Click "Version Up" to save incremented project version
 
-### What the Script Does
-- Sets durations for Plate, working, and Output compositions
-- Updates frame preview timing (first, middle, last frames)
-- Replaces template variables with current information
-- Preserves original templates in layer comment fields
-- Updates date/time information (via expressions)
+The script will:
+- Set Sequence and Working to your duration
+- Set Output to duration + 1 (for slate frame)
+- Update Time Remap on the three Working comp layers in SLATE_TEMPLATE
 
-### Re-running the Script
-You can run the script multiple times to update information:
-- Change comments before final render
-- Update artist or lens information
-- Refresh date/time stamps
+## Expressions for Text Layers no controlled by the Script
 
-The original template variables are safely stored in layer comment fields and will be used for fresh replacements each time.
+### Project Name expression
 
-## Template Variables
+```jsx
+thisProject.fullPath.replace(/\\/g, "/").split("/").pop().replace(/\.[^\.]+$/, "")
+```
 
-Only these user input variables are handled by the script:
+### Date / Time expresssion
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `{{artist}}` | Artist name from UI | `"JD"` |
-| `{{lens}}` | Lens info from UI | `"35"` |
-| `{{comment}}` | Comment from UI | `"Final render v3"` |
+```jsx
+var d = new Date();
+  d.getFullYear() + " / " + (d.getMonth()+1) + " / " + d.getDate() + " " + d.getHours() + ":" +
+  d.getMinutes() + " PST"
+```
+### Dimension expression
 
-All other information (date, project name, dimensions, etc.) should use After Effects expressions for automatic updating.
+```jsx
+comp("Output").width + " x " + comp("Output").height
+```
+### Duration expression
 
-## Frame Structure
+```jsx
+var c = comp("Output");
+var d = c.duration;                  // seconds
+var fps = Math.round(1 / c.frameDuration);
+var totalFrames = Math.round(d * fps);
 
-- **Output compositions start at frame 1000**
-- **Frame 1000:** Slate frame (1 frame duration)
-- **Frame 1001+:** Actual footage begins
-- **Slate shows:** Three frame previews (first, middle, last)
+// subtract one frame
+var adjFrames = totalFrames - 1;
+var adjSeconds = (adjFrames / fps);
 
-## Troubleshooting
+var totalSeconds = Math.floor(adjSeconds);
+var h = Math.floor(totalSeconds / 3600);
+var m = Math.floor((totalSeconds % 3600) / 60);
+var s = Math.floor(totalSeconds % 60);
+var fr = Math.floor((adjSeconds % 1) * fps);
 
-**Missing compositions warning:**
-- Ensure your project contains: `Plate`, `working`, and `Output` compositions
+// zero-padding to 2 digits
+function pad(n) { return ("0" + n).slice(-2); }
 
-**Slate not updating:**
-- Check that SLATE_TEMPLATE exists and is added to Output compositions
-- Verify Time Remapping is enabled on the 3 Output comp layers in SLATE_TEMPLATE
+adjFrames + " F " + pad(h) + ":" + pad(m) + ":" + pad(s) + ":" + pad(fr) + " @" + fps + "fps";
+```
 
-**Template variables not working:**
-- Original template text is stored in layer comment fields, not visible text
-- Use exactly: `{{artist}}`, `{{lens}}`, `{{comment}}` (case-sensitive)
+### Frame Range expression
 
----
+```jsx
+var c = comp("Output"); 
+Math.round(c.displayStartTime / c.frameDuration + c.displayStartTime) + " - " + Math.round((c.displayStartTime + c.duration) / c.frameDuration + c.displayStartTime - 1);
+```
 
-## Requirements
-- Adobe After Effects CS6 or later
-- Windows or macOS
-- ExtendScript enabled
+### Plate name expression
 
-## Support
-For issues or questions, refer to the complete documentation in the project repository.
+```jsx
+// Get reference to the "Sequence" comp
+var sequenceComp = comp("Sequence");
+
+// Initialize variable to store footage layer name
+var footageName = "No footage found";
+
+// Loop through all layers in the Sequence comp
+for (var i = 1; i <= sequenceComp.numLayers; i++) {
+    var layer = sequenceComp.layer(i);
+    
+    // Check if it's not a solid, adjustment layer, or text layer
+    if (layer.source && 
+        !layer.adjustmentLayer && 
+        layer.source.typeName !== "Solid") {
+        
+        // Get the layer name and remove file extension
+        var layerName = layer.name;
+        var lastDotIndex = layerName.lastIndexOf(".");
+        
+        if (lastDotIndex > 0) {
+            footageName = layerName.substring(0, lastDotIndex);
+        } else {
+            footageName = layerName; // No extension found, use full name
+        }
+        
+        break; // Stop at first footage layer found
+    }
+}
+
+// Return the footage layer name without extension
+footageName;
+```
