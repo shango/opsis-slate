@@ -16,109 +16,176 @@
     
     // Build UI
     function buildUI(thisObj) {
-        var panel = (thisObj instanceof Panel) ? thisObj : new Window("dialog", SCRIPT_NAME, undefined, {resizeable: true});
-        
-        // Panel setup
+        var panel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Opsis - Slate", undefined, {resizeable:true});
         panel.orientation = "column";
-        panel.alignChildren = "center";
+        panel.alignChildren = ["fill","top"];
         panel.spacing = 10;
-        panel.margins = 15;
-        
-        // Logo placeholder group
-        var logoGroup = panel.add("group");
+        panel.margins = 16;
+
+        // MAINGROUP
+        var mainGroup = panel.add("group", undefined, {name: "mainGroup"});
+        mainGroup.orientation = "column";
+        mainGroup.alignChildren = ["fill","top"];
+        mainGroup.spacing = 10;
+        mainGroup.margins = 0;
+
+        // Logo - automatically load logo.jpg from script folder, fallback to placeholder
+        var logoGroup = mainGroup.add("group");
         logoGroup.orientation = "column";
         logoGroup.alignChildren = "center";
-        logoGroup.spacing = 5;
-        
-        // Try to load logo
-        var logoPanel = logoGroup.add("panel");
-        logoPanel.preferredSize.width = 90;
-        logoPanel.preferredSize.height = 90;
         
         try {
+            // Get script file location
             var scriptFile = new File($.fileName);
             var scriptFolder = scriptFile.parent;
             var logoFile = new File(scriptFolder.fsName + "/logo.jpg");
             
             if (logoFile.exists) {
-                var logoImage = logoPanel.add("image", undefined, logoFile);
-                logoImage.size = [90, 90];
+                var logo = logoGroup.add("image", undefined, logoFile, {name: "logo"});
+                logo.preferredSize.width = 90;
+                logo.preferredSize.height = 90;
             } else {
-                var logoText = logoPanel.add("statictext", undefined, "Logo\n90x90");
+                // Fallback to placeholder
+                var logoPanel = logoGroup.add("panel");
+                logoPanel.preferredSize.width = 90;
+                logoPanel.preferredSize.height = 90;
+                var logoText = logoPanel.add("statictext", undefined, "Logo");
                 logoText.alignment = "center";
             }
         } catch (e) {
-            var logoText = logoPanel.add("statictext", undefined, "Logo\n90x90");
+            // Fallback to placeholder if any error occurs
+            var logoPanel = logoGroup.add("panel");
+            logoPanel.preferredSize.width = 90;
+            logoPanel.preferredSize.height = 90;
+            var logoText = logoPanel.add("statictext", undefined, "Logo");
             logoText.alignment = "center";
         }
-        
-        // Separator
-        var separator1 = panel.add("panel");
-        separator1.preferredSize.width = 210;
-        separator1.preferredSize.height = 1;
-        
-        // Duration input group
-        var durationGroup = panel.add("group");
+
+        // DURATIONPANEL
+        var durationPanel = mainGroup.add("panel", undefined, undefined, {name: "durationPanel"});
+        durationPanel.text = "Duration";
+        durationPanel.orientation = "row";
+        durationPanel.alignChildren = ["left","top"];
+        durationPanel.spacing = 10;
+        durationPanel.margins = 10;
+
+        // DURATIONGROUP
+        var durationGroup = durationPanel.add("group", undefined, {name: "durationGroup"});
         durationGroup.orientation = "row";
-        durationGroup.alignChildren = "center";
-        durationGroup.spacing = 8;
-        
-        var durationLabel = durationGroup.add("statictext", undefined, "Duration (frames):");
-        durationLabel.preferredSize.width = 100;
-        
-        var durationInput = durationGroup.add("edittext", undefined, "");
-        durationInput.preferredSize.width = 80;
-        durationInput.preferredSize.height = 25;
-        
-        // Lens input group
-        var lensGroup = panel.add("group");
-        lensGroup.orientation = "row";
-        lensGroup.alignChildren = "center";
-        lensGroup.spacing = 8;
-        
-        var lensLabel = lensGroup.add("statictext", undefined, "Lens:");
-        lensLabel.preferredSize.width = 100;
-        
-        var lensInput = lensGroup.add("edittext", undefined, "");
-        lensInput.preferredSize.width = 80;
-        lensInput.preferredSize.height = 25;
-        
-        // Comment input group
-        var commentGroup = panel.add("group");
-        commentGroup.orientation = "column";
-        commentGroup.alignChildren = "left";
-        commentGroup.spacing = 5;
-        
-        var commentLabel = commentGroup.add("statictext", undefined, "Comment:");
-        
-        var commentInput = commentGroup.add("edittext", undefined, "", {multiline: true});
-        commentInput.preferredSize.width = 180;
-        commentInput.preferredSize.height = 50;
-        
-        // Button group
-        var buttonGroup = panel.add("group");
-        buttonGroup.orientation = "row";
-        buttonGroup.alignChildren = "center";
-        buttonGroup.spacing = 10;
-        
-        var setButton = buttonGroup.add("button", undefined, "Set Durations");
-        setButton.preferredSize.width = 90;
-        setButton.preferredSize.height = 25;
-        
-        var undoButton = buttonGroup.add("button", undefined, "Undo");
-        undoButton.preferredSize.width = 90;
-        undoButton.preferredSize.height = 25;
-        undoButton.enabled = false;
-        
+        durationGroup.alignChildren = ["left","center"];
+        durationGroup.spacing = 10;
+        durationGroup.margins = 0;
+
+        var durationButton = durationGroup.add("button", undefined, undefined, {name: "durationButton"});
+        durationButton.text = "Set Duration";
+
+        var durationInput = durationGroup.add('edittext {properties: {name: "durationInput"}}');
+        durationInput.preferredSize.width = 60;
+
+        // SLATEPANEL
+        var slatePanel = mainGroup.add("panel", undefined, undefined, {name: "slatePanel"});
+        slatePanel.text = "Slate Info";
+        slatePanel.preferredSize.height = 160;
+        slatePanel.orientation = "column";
+        slatePanel.alignChildren = ["left","top"];
+        slatePanel.spacing = 10;
+        slatePanel.margins = 10;
+
+        // SLATEGROUP
+        var slateGroup = slatePanel.add("group", undefined, {name: "slateGroup"});
+        slateGroup.orientation = "row";
+        slateGroup.alignChildren = ["left","center"];
+        slateGroup.spacing = 10;
+        slateGroup.margins = 0;
+
+        var artistText = slateGroup.add("statictext", undefined, undefined, {name: "artistText"});
+        artistText.text = "Artist ";
+
+        var artistInput = slateGroup.add('edittext {properties: {name: "artistInput"}}');
+        artistInput.preferredSize.width = 60;
+
+        var lensText = slateGroup.add("statictext", undefined, undefined, {name: "lensText"});
+        lensText.text = "Lens";
+
+        var lensInput = slateGroup.add('edittext {properties: {name: "lensInput"}}');
+        lensInput.preferredSize.width = 60;
+
+        // NOTEGROUP
+        var noteGroup = slatePanel.add("group", undefined, {name: "noteGroup"});
+        noteGroup.orientation = "column";
+        noteGroup.alignChildren = ["left","center"];
+        noteGroup.spacing = 10;
+        noteGroup.margins = 0;
+
+        var noteInput = noteGroup.add('edittext {properties: {name: "noteInput", multiline: true, scrolling: false}}');
+        noteInput.preferredSize.width = 220;
+        noteInput.preferredSize.height = 60;
+
+        var slateButton = noteGroup.add("button", undefined, undefined, {name: "slateButton"});
+        slateButton.text = "Update Slate";
+        slateButton.justify = "left";
+        slateButton.alignment = ["left","center"];
+
+        // VERSIONPANEL
+        var versionPanel = mainGroup.add("panel", undefined, undefined, {name: "versionPanel"});
+        versionPanel.text = "Version";
+        versionPanel.orientation = "column";
+        versionPanel.alignChildren = ["left","top"];
+        versionPanel.spacing = 10;
+        versionPanel.margins = 10;
+
+        // VERSIONGROUP
+        var versionGroup = versionPanel.add("group", undefined, {name: "versionGroup"});
+        versionGroup.orientation = "column";
+        versionGroup.alignChildren = ["left","center"];
+        versionGroup.spacing = 10;
+        versionGroup.margins = 0;
+        versionGroup.alignment = ["fill","top"];
+
+        var versionButton = versionGroup.add("button", undefined, undefined, {name: "versionButton"});
+        versionButton.text = "Version Up";
+
         // Status text
         var statusText = panel.add("statictext", undefined, "Status: Ready");
-        statusText.preferredSize.width = 200;
         
-        // Load saved preferences
-        loadPreferences();
+        // Helper functions for preferences
+        function savePreferences() {
+            var projectId = getProjectId();
+            app.settings.saveSetting(SCRIPT_NAME, "projectId", projectId);
+            app.settings.saveSetting(SCRIPT_NAME, "duration", durationInput.text);
+            app.settings.saveSetting(SCRIPT_NAME, "lens", lensInput.text);
+            app.settings.saveSetting(SCRIPT_NAME, "artist", artistInput.text);
+            app.settings.saveSetting(SCRIPT_NAME, "comment", noteInput.text);
+        }
         
-        // Button click handlers
-        setButton.onClick = function() {
+        function loadPreferences() {
+            try {
+                var currentProjectId = getProjectId();
+                var savedProjectId = app.settings.haveSetting(SCRIPT_NAME, "projectId") ? 
+                                    app.settings.getSetting(SCRIPT_NAME, "projectId") : "";
+                
+                // Only load preferences if they're for the current project
+                if (savedProjectId === currentProjectId && currentProjectId !== "") {
+                    if (app.settings.haveSetting(SCRIPT_NAME, "duration")) {
+                        durationInput.text = app.settings.getSetting(SCRIPT_NAME, "duration");
+                    }
+                    if (app.settings.haveSetting(SCRIPT_NAME, "lens")) {
+                        lensInput.text = app.settings.getSetting(SCRIPT_NAME, "lens");
+                    }
+                    if (app.settings.haveSetting(SCRIPT_NAME, "artist")) {
+                        artistInput.text = app.settings.getSetting(SCRIPT_NAME, "artist");
+                    }
+                    if (app.settings.haveSetting(SCRIPT_NAME, "comment")) {
+                        noteInput.text = app.settings.getSetting(SCRIPT_NAME, "comment");
+                    }
+                }
+            } catch (e) {
+                // Silently fail if there's an issue with preferences
+            }
+        }
+        
+        // Button functionality with real processing
+        durationButton.onClick = function() {
             var duration = parseInt(durationInput.text);
             
             // Validate duration
@@ -127,19 +194,17 @@
                 return;
             }
             
-            // Save preferences
+            // Save preferences and load them when button is clicked (not during UI construction)
             savePreferences();
             
-            // Process comps
-            app.beginUndoGroup(SCRIPT_NAME);
+            // Process comp durations
+            app.beginUndoGroup("Set Comp Durations");
             
             try {
-                var result = processComps(duration, lensInput.text, commentInput.text);
+                var result = processCompDurations(duration);
                 
                 if (result.success) {
                     statusText.text = "Status: Duration set to " + duration + " frames";
-                    alert("Durations have been changed to " + duration + " frames.\n\n" + result.message, SCRIPT_NAME);
-                    undoButton.enabled = true;
                 } else {
                     statusText.text = "Status: Error occurred";
                     alert(result.message, SCRIPT_NAME);
@@ -152,30 +217,57 @@
             app.endUndoGroup();
         };
         
-        undoButton.onClick = function() {
-            app.executeCommand(16); // Undo command
-            undoButton.enabled = false;
-            statusText.text = "Status: Undone";
+        slateButton.onClick = function() {
+            var duration = parseInt(durationInput.text);
+            
+            // Validate duration
+            if (isNaN(duration) || duration <= 0 || duration > MAX_DURATION) {
+                alert("Please enter a valid duration between 1 and " + MAX_DURATION + " frames.", SCRIPT_NAME);
+                return;
+            }
+            
+            // Save preferences
+            savePreferences();
+            
+            // Update slate
+            app.beginUndoGroup("Update Slate");
+            
+            try {
+                var result = processSlateUpdate(duration, lensInput.text, artistInput.text, noteInput.text);
+                
+                if (result.success) {
+                    statusText.text = "Status: Slate updated";
+                } else {
+                    statusText.text = "Status: Error occurred";
+                    alert(result.message, SCRIPT_NAME);
+                }
+            } catch (e) {
+                alert("Error: " + e.toString(), SCRIPT_NAME);
+                statusText.text = "Status: Error occurred";
+            }
+            
+            app.endUndoGroup();
         };
         
-        // Helper functions for preferences
-        function savePreferences() {
-            app.settings.saveSetting(SCRIPT_NAME, "duration", durationInput.text);
-            app.settings.saveSetting(SCRIPT_NAME, "lens", lensInput.text);
-            app.settings.saveSetting(SCRIPT_NAME, "comment", commentInput.text);
-        }
+        versionButton.onClick = function() {
+            try {
+                var result = versionUpProject();
+                if (result.success) {
+                    statusText.text = "Status: Saved as " + result.newFileName;
+                    // Load preferences after project changes
+                    loadPreferences();
+                } else {
+                    statusText.text = "Status: Version up failed";
+                    alert(result.message, SCRIPT_NAME);
+                }
+            } catch (e) {
+                alert("Error versioning up: " + e.toString(), SCRIPT_NAME);
+                statusText.text = "Status: Version up error";
+            }
+        };
         
-        function loadPreferences() {
-            if (app.settings.haveSetting(SCRIPT_NAME, "duration")) {
-                durationInput.text = app.settings.getSetting(SCRIPT_NAME, "duration");
-            }
-            if (app.settings.haveSetting(SCRIPT_NAME, "lens")) {
-                lensInput.text = app.settings.getSetting(SCRIPT_NAME, "lens");
-            }
-            if (app.settings.haveSetting(SCRIPT_NAME, "comment")) {
-                commentInput.text = app.settings.getSetting(SCRIPT_NAME, "comment");
-            }
-        }
+        // Load preferences immediately when UI is built, not on first button click
+        loadPreferences();
         
         // Layout and show
         panel.layout.layout(true);
@@ -183,52 +275,58 @@
         return panel;
     }
     
-    // Main processing function
-    function processComps(duration, lens, comment) {
+    // Main processing function (kept for backward compatibility)
+    function processComps(duration, lens, artist, comment) {
+        var compResult = processCompDurations(duration);
+        var slateResult = processSlateUpdate(duration, lens, artist, comment);
+        
+        return {
+            success: compResult.success || slateResult.success,
+            message: compResult.message + (slateResult.message ? "\n" + slateResult.message : "")
+        };
+    }
+    
+    // Process comp durations only
+    function processCompDurations(duration) {
         var project = app.project;
         var missingComps = [];
         var processedComps = [];
         
-        // Find and process Plate comp
-        var plateComp = findCompByName("Plate");
-        if (plateComp) {
-            plateComp.duration = duration / plateComp.frameRate;
-            processedComps.push("Plate");
+        // Find and process Sequence comp (holds footage file)
+        var sequenceComp = findCompByName("Sequence");
+        if (sequenceComp) {
+            sequenceComp.duration = duration / sequenceComp.frameRate;
+            processedComps.push("Sequence");
         } else {
-            missingComps.push("Plate");
+            missingComps.push("Sequence");
         }
         
-        // Find and process working comp
-        var workingComp = findCompByName("working");
+        // Find and process Working comp (holds instance of Sequence)
+        var workingComp = findCompByName("Working");
         if (workingComp) {
             workingComp.duration = duration / workingComp.frameRate;
-            processedComps.push("working");
+            processedComps.push("Working");
         } else {
-            missingComps.push("working");
+            missingComps.push("Working");
         }
         
-        // Find and process Output comps
-        var outputComps = findCompsStartingWith("Output");
-        if (outputComps.length > 0) {
-            for (var i = 0; i < outputComps.length; i++) {
-                var outputComp = outputComps[i];
-                // Output comps get duration + 1 for slate frame
-                outputComp.duration = (duration + 1) / outputComp.frameRate;
-                processedComps.push(outputComp.name);
-                
-                // Update slate for this output comp
-                updateSlate(outputComp, duration, lens, comment);
-            }
+        // Find and process Output comp (has Working starting at frame 2, slate on frame 1)
+        var outputComp = findCompByName("Output");
+        if (outputComp) {
+            // Output comp gets duration + 1 for slate frame
+            outputComp.duration = (duration + 1) / outputComp.frameRate;
+            processedComps.push("Output");
         } else {
-            missingComps.push("Output comps");
+            missingComps.push("Output");
         }
         
         // Build result message
         var message = "";
         if (processedComps.length > 0) {
-            message += "Updated comps: " + processedComps.join(", ") + "\n";
+            message += "Updated comp durations: " + processedComps.join(", ");
         }
         if (missingComps.length > 0) {
+            if (message) message += "\n";
             message += "Missing comps (not updated): " + missingComps.join(", ");
         }
         
@@ -238,87 +336,94 @@
         };
     }
     
+    // Process slate update only
+    function processSlateUpdate(duration, lens, artist, comment) {
+        var outputComp = findCompByName("Output");
+        
+        if (outputComp) {
+            // Update slate for the output comp
+            updateSlate(outputComp, duration, lens, artist, comment);
+            
+            return {
+                success: true,
+                message: "Updated slate for: " + outputComp.name
+            };
+        } else {
+            return {
+                success: false,
+                message: "Output comp not found for slate update"
+            };
+        }
+    }
+    
     // Update slate composition
-    function updateSlate(outputComp, duration, lens, comment) {
+    function updateSlate(outputComp, duration, lens, artist, comment) {
         // Find slate template comp
         var slateComp = findCompByName(SLATE_TEMPLATE_NAME);
         if (!slateComp) {
-            // Create slate comp if it doesn't exist
-            slateComp = app.project.items.addComp(
-                SLATE_TEMPLATE_NAME,
-                outputComp.width,
-                outputComp.height,
-                outputComp.pixelAspect,
-                1 / outputComp.frameRate, // 1 frame duration
-                outputComp.frameRate
-            );
+            alert("SLATE_TEMPLATE composition not found. Please use the correct template file that includes a SLATE_TEMPLATE composition.");
+            return;
         }
         
         // Update frame holds for the three preview frames
         updateFrameHolds(slateComp, outputComp, duration);
         
         // Update text information
-        updateSlateText(slateComp, outputComp, duration, lens, comment);
+        updateSlateText(slateComp, outputComp, duration, lens, artist, comment);
         
-        // Ensure slate is on frame 1 of output comp
-        ensureSlateInOutput(outputComp, slateComp);
+        // Don't update slate timing - leave it positioned where it was in template
     }
     
-    // Update frame hold expressions
+    // Update frame holds using Time Remap expressions on layers identified by comment
     function updateFrameHolds(slateComp, outputComp, duration) {
-        // Look for layers that are copies of the output comp
-        for (var i = 1; i <= slateComp.numLayers; i++) {
-            var layer = slateComp.layer(i);
+        // Get the Working comp to determine frame rate
+        var workingComp = findCompByName("Working");
+        if (!workingComp) {
+            return; // Can't proceed without working comp
+        }
+        
+        // Calculate frame indices (0-based for AE)
+        var firstFrameIndex = 0; // First frame = frame 0
+        var middleFrameIndex = Math.floor((duration - 1) / 2); // Middle frame
+        var lastFrameIndex = duration - 1; // Last frame
+        
+        // Convert to seconds for Time Remap expressions
+        var frameRate = workingComp.frameRate;
+        var firstFrameTime = firstFrameIndex / frameRate;
+        var middleFrameTime = middleFrameIndex / frameRate;
+        var lastFrameTime = lastFrameIndex / frameRate;
+        
+        // Update each layer identified by comment field
+        setTimeRemapExpression(slateComp, "FIRST", firstFrameTime);
+        setTimeRemapExpression(slateComp, "MIDDLE", middleFrameTime);
+        setTimeRemapExpression(slateComp, "LAST", lastFrameTime);
+    }
+    
+    // Set time remap expression on a layer identified by comment field
+    function setTimeRemapExpression(comp, commentText, timeInSeconds) {
+        var layer = findLayerByComment(comp, commentText);
+        if (!layer) {
+            return; // Layer not found, skip silently
+        }
+        
+        try {
+            // Get the Time Remap property if it exists
+            var timeRemapProp = layer.property("ADBE Time Remapping");
             
-            if (layer.source && layer.source instanceof CompItem) {
-                // Check if this is a reference to the output comp
-                if (layer.source.name.indexOf("Output") === 0 || layer.name.indexOf("Frame") !== -1) {
-                    // Determine which frame this should show based on position
-                    var layerY = layer.position.value[1];
-                    var compHeight = slateComp.height;
-                    
-                    // Assuming three frames stacked vertically
-                    if (layerY < compHeight * 0.33) {
-                        // Top frame - first frame
-                        setTimeRemap(layer, OUTPUT_START_FRAME + 1, outputComp.frameRate);
-                    } else if (layerY < compHeight * 0.66) {
-                        // Middle frame
-                        var middleFrame = OUTPUT_START_FRAME + 1 + Math.floor(duration / 2);
-                        setTimeRemap(layer, middleFrame, outputComp.frameRate);
-                    } else {
-                        // Bottom frame - last frame
-                        var lastFrame = OUTPUT_START_FRAME + duration;
-                        setTimeRemap(layer, lastFrame, outputComp.frameRate);
-                    }
-                }
+            if (timeRemapProp) {
+                // Set the expression to the calculated time in seconds
+                timeRemapProp.expression = timeInSeconds.toString();
             }
+            
+        } catch (e) {
+            // Silent fail if there's any issue
         }
     }
     
-    // Set time remapping for a layer
-    function setTimeRemap(layer, frameNumber, frameRate) {
-        if (!layer.timeRemapEnabled) {
-            layer.timeRemapEnabled = true;
-        }
-        
-        // Clear existing keyframes
-        while (layer.property("Time Remap").numKeys > 0) {
-            layer.property("Time Remap").removeKey(1);
-        }
-        
-        // Set time remap to hold on specific frame
-        var timeInSeconds = frameNumber / frameRate;
-        layer.property("Time Remap").setValueAtTime(0, timeInSeconds);
-    }
-    
-    // Update slate text layers
-    function updateSlateText(slateComp, outputComp, duration, lens, comment) {
+    // Update slate text layers using template layer duplication approach
+    function updateSlateText(slateComp, outputComp, duration, lens, artist, comment) {
         // Get current date/time
         var now = new Date();
-        var dateStr = now.getFullYear() + " / " + 
-                     padZero(now.getMonth() + 1) + " / " + 
-                     padZero(now.getDate());
-        var timeStr = padZero(now.getHours()) + ":" + padZero(now.getMinutes());
         
         // Calculate duration in different formats
         var totalSeconds = duration / outputComp.frameRate;
@@ -327,101 +432,73 @@
         var seconds = Math.floor(totalSeconds % 60);
         var frames = duration % Math.floor(outputComp.frameRate);
         
-        var durationStr = padZero(hours) + ":" + padZero(minutes) + ":" + 
-                         padZero(seconds) + ":" + padZero(frames);
-        
         // Get project name (without extension)
         var projectName = app.project.file ? app.project.file.name.replace(/\.[^\.]+$/, '') : "Untitled Project";
         
-        // Text content for slate
-        var textContent = {
-            "Project": projectName,
-            "Date": dateStr + " " + timeStr + " PST",
-            "Duration": duration + " F " + durationStr + " @" + Math.round(outputComp.frameRate) + "fps",
-            "Dimensions": outputComp.width + " x " + outputComp.height,
-            "Lens": lens ? lens + "mm" : "",
-            "Vendor": VENDOR_NAME,
-            "Comment": comment || ""
+        // Define template variables and their values (only user inputs)
+        var templateVars = {
+            "{{artist}}": artist || "",
+            "{{lens}}": lens || "",
+            "{{comment}}": comment || ""
         };
         
-        // Create or update text layers
-        var yPosition = 150; // Starting Y position for text
-        var lineHeight = 40;
-        
-        for (var key in textContent) {
-            if (textContent[key] === "" && key !== "Comment") continue;
+        // Process all text layers in the slate comp
+        for (var i = 1; i <= slateComp.numLayers; i++) {
+            var layer = slateComp.layer(i);
             
-            var textLayer = findOrCreateTextLayer(slateComp, key);
-            var sourceText = textLayer.property("Source Text");
-            
-            // Format the text
-            var displayText = key + ":\t\t" + textContent[key];
-            if (key === "Project") {
-                displayText = textContent[key]; // Project name without label
+            if (layer instanceof TextLayer) {
+                var sourceText = layer.property("Source Text");
+                var templateText = layer.comment;
+                
+                // If comment is empty, this is the first run - store current text as template
+                if (!templateText || templateText === "") {
+                    templateText = sourceText.value.text;
+                    layer.comment = templateText;
+                }
+                
+                var updatedText = templateText;
+                
+                // Replace all template variables
+                for (var variable in templateVars) {
+                    if (templateVars[variable] !== "") {
+                        updatedText = updatedText.replace(new RegExp(escapeRegExp(variable), 'g'), templateVars[variable]);
+                    }
+                }
+                
+                // Update the text content only if it changed
+                if (updatedText !== sourceText.value.text) {
+                    var textDoc = sourceText.value;
+                    textDoc.text = updatedText;
+                    sourceText.setValue(textDoc);
+                }
             }
-            
-            sourceText.setValue(displayText);
-            
-            // Style the text
-            var textDoc = sourceText.value;
-            textDoc.fontSize = (key === "Project") ? 36 : 24;
-            textDoc.fillColor = [1, 1, 1]; // White
-            textDoc.font = getSystemFont();
-            textDoc.justification = ParagraphJustification.LEFT_JUSTIFY;
-            
-            if (key === "Project") {
-                textDoc.fontSize = 36;
-                // Bold style would need to be set if available in the font
-            }
-            
-            sourceText.setValue(textDoc);
-            
-            // Position the text
-            textLayer.position.setValue([slateComp.width / 2, yPosition]);
-            yPosition += (key === "Project") ? lineHeight * 1.5 : lineHeight;
         }
     }
     
-    // Find or create text layer
-    function findOrCreateTextLayer(comp, layerName) {
-        // Look for existing layer
-        for (var i = 1; i <= comp.numLayers; i++) {
-            if (comp.layer(i).name === layerName + "_Text") {
-                return comp.layer(i);
-            }
-        }
-        
-        // Create new text layer
-        var textLayer = comp.layers.addText("");
-        textLayer.name = layerName + "_Text";
-        return textLayer;
+    // Helper function to escape special regex characters
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
     
-    // Ensure slate comp is in output comp
-    function ensureSlateInOutput(outputComp, slateComp) {
-        var slateLayer = null;
-        
+    
+    // Update existing slate layer timing (assumes slate is already in output comp)
+    function updateSlateInOutput(outputComp, slateComp) {
         // Look for existing slate layer
         for (var i = 1; i <= outputComp.numLayers; i++) {
             if (outputComp.layer(i).source === slateComp) {
-                slateLayer = outputComp.layer(i);
-                break;
+                var slateLayer = outputComp.layer(i);
+                
+                // Get the Output comp's start time and calculate frame 1 in seconds
+                var outputStartTime = outputComp.displayStartTime;
+                var oneFrameDuration = 1 / outputComp.frameRate;
+                
+                // Set slate to appear on the first frame of the Output comp for 1 frame duration
+                slateLayer.startTime = outputStartTime;
+                slateLayer.outPoint = outputStartTime + oneFrameDuration;
+                
+                break; // Only update the first slate layer found
             }
         }
-        
-        // Add slate if not found
-        if (!slateLayer) {
-            slateLayer = outputComp.layers.add(slateComp);
-        }
-        
-        // Position slate at frame 1000 (OUTPUT_START_FRAME)
-        slateLayer.startTime = OUTPUT_START_FRAME / outputComp.frameRate;
-        
-        // Ensure it's only 1 frame long
-        slateLayer.outPoint = slateLayer.inPoint + (1 / outputComp.frameRate);
-        
-        // Move to bottom of layer stack
-        slateLayer.moveToEnd();
     }
     
     // Helper function to find comp by exact name
@@ -447,27 +524,121 @@
         return comps;
     }
     
+    // Helper function to find layer by exact name in a comp
+    function findLayerByName(comp, layerName) {
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            if (layer.name === layerName) {
+                return layer;
+            }
+        }
+        return null;
+    }
+    
+    // Helper function to find layer by comment text in a comp
+    function findLayerByComment(comp, commentText) {
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            if (layer.comment === commentText) {
+                return layer;
+            }
+        }
+        return null;
+    }
+    
     // Helper function to pad numbers with zero
     function padZero(num) {
         return (num < 10 ? "0" : "") + num;
     }
     
-    // Get appropriate system font
-    function getSystemFont() {
-        // Try common cross-platform fonts
-        var fonts = ["Arial", "Helvetica", "Helvetica Neue", "Segoe UI", "San Francisco"];
-        
-        for (var i = 0; i < fonts.length; i++) {
-            // Check if font exists (this is a simplified check)
-            try {
-                return fonts[i];
-            } catch (e) {
-                continue;
-            }
+    // Get project display name (without extension) - equivalent to expression version
+    function getProjectDisplayName() {
+        if (app.project.file) {
+            // ExtendScript equivalent of: thisProject.fullPath.replace(/\\/g, "/").split("/").pop().replace(/\.[^\.]+$/, "")
+            var fullPath = app.project.file.fsName.replace(/\\/g, "/");
+            var fileName = fullPath.split("/").pop();
+            return fileName.replace(/\.[^\.]+$/, '');
+        } else {
+            return "Untitled Project";
+        }
+    }
+    
+    // Get unique project identifier for preferences
+    function getProjectId() {
+        if (app.project.file) {
+            // Use full file path as unique identifier
+            return app.project.file.fsName;
+        } else {
+            // For unsaved projects, return empty string (no preferences saved/loaded)
+            return "";
+        }
+    }
+    
+    // Version up project file
+    function versionUpProject() {
+        if (!app.project.file) {
+            return {
+                success: false,
+                message: "Project must be saved before versioning up."
+            };
         }
         
-        return "Arial"; // Fallback
+        var currentFile = app.project.file;
+        var currentPath = currentFile.fsName;
+        var currentName = currentFile.name;
+        
+        // Parse version number from filename
+        var versionMatch = currentName.match(/_v(\d+)\.aep$/i);
+        var newFileName, newVersion;
+        
+        var folder = currentFile.parent;
+        var baseNameWithoutVersion, versionLength;
+        
+        if (versionMatch) {
+            // Found version number
+            var currentVersion = parseInt(versionMatch[1], 10);
+            versionLength = versionMatch[1].length;
+            baseNameWithoutVersion = currentName.replace(/_v\d+\.aep$/i, '');
+            newVersion = currentVersion + 1;
+        } else {
+            // No version found, start with v0001
+            baseNameWithoutVersion = currentName.replace(/\.aep$/i, '');
+            versionLength = 4;
+            newVersion = 1;
+        }
+        
+        // Find next available version number
+        var newFile;
+        do {
+            // Pad with zeros to match original length (or 4 digits for new versions)
+            var paddedVersion = newVersion.toString();
+            while (paddedVersion.length < versionLength) {
+                paddedVersion = "0" + paddedVersion;
+            }
+            
+            newFileName = baseNameWithoutVersion + "_v" + paddedVersion + ".aep";
+            newFile = new File(folder.fsName + "/" + newFileName);
+            
+            if (newFile.exists) {
+                newVersion++;
+            }
+        } while (newFile.exists);
+        
+        // Save as new version
+        try {
+            app.project.save(newFile);
+            return {
+                success: true,
+                newFileName: newFileName.replace(/\.aep$/i, '')
+            };
+        } catch (e) {
+            return {
+                success: false,
+                message: "Failed to save new version: " + e.toString()
+            };
+        }
     }
+    
     
     // Build and show UI
     var ui = buildUI(thisObj);
