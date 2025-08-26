@@ -10,9 +10,7 @@
     // Script configuration
     var SCRIPT_NAME = "Set Comp Durations";
     var MAX_DURATION = 2000;
-    var VENDOR_NAME = "OPSIS";
     var SLATE_TEMPLATE_NAME = "SLATE_TEMPLATE";
-    var OUTPUT_START_FRAME = 1000; // Frame where output comp starts
     
     // Build UI
     function buildUI(thisObj) {
@@ -29,36 +27,21 @@
         mainGroup.spacing = 10;
         mainGroup.margins = 0;
 
-        // Logo - automatically load logo.jpg from script folder, fallback to placeholder
+        // Logo group
         var logoGroup = mainGroup.add("group");
         logoGroup.orientation = "column";
         logoGroup.alignChildren = "center";
         
-        try {
-            // Get script file location
-            var scriptFile = new File($.fileName);
-            var scriptFolder = scriptFile.parent;
-            var logoFile = new File(scriptFolder.fsName + "/logo.jpg");
-            
-            if (logoFile.exists) {
-                var logo = logoGroup.add("image", undefined, logoFile, {name: "logo"});
-                logo.preferredSize.width = 90;
-                logo.preferredSize.height = 90;
-            } else {
-                // Fallback to placeholder
-                var logoPanel = logoGroup.add("panel");
-                logoPanel.preferredSize.width = 90;
-                logoPanel.preferredSize.height = 90;
-                var logoText = logoPanel.add("statictext", undefined, "Logo");
-                logoText.alignment = "center";
+        var scriptPath = File($.fileName).parent;
+        var logoFile = new File(scriptPath.fsName + "/logo/logo.png");
+        
+        if (logoFile.exists) {
+            try {
+                var logoImg = ScriptUI.newImage(logoFile);
+                logoGroup.add("image", undefined, logoImg);
+            } catch(e) {
+                // Silent fail if logo can't load
             }
-        } catch (e) {
-            // Fallback to placeholder if any error occurs
-            var logoPanel = logoGroup.add("panel");
-            logoPanel.preferredSize.width = 90;
-            logoPanel.preferredSize.height = 90;
-            var logoText = logoPanel.add("statictext", undefined, "Logo");
-            logoText.alignment = "center";
         }
 
         // DURATIONPANEL
@@ -79,8 +62,27 @@
         var durationButton = durationGroup.add("button", undefined, undefined, {name: "durationButton"});
         durationButton.text = "Set Duration";
 
-        var durationInput = durationGroup.add('edittext {properties: {name: "durationInput"}}');
+        // CUSTOMDURATIONGROUP - second row for custom duration option
+        var customDurationGroup = durationPanel.add("group", undefined, {name: "customDurationGroup"});
+        customDurationGroup.orientation = "row";
+        customDurationGroup.alignChildren = ["left","center"];
+        customDurationGroup.spacing = 10;
+        customDurationGroup.margins = 0;
+
+        var customDurationCheckbox = customDurationGroup.add("checkbox", undefined, undefined, {name: "customDurationCheckbox"});
+        customDurationCheckbox.text = "Custom Duration";
+
+        var durationInput = customDurationGroup.add('edittext {properties: {name: "durationInput"}}');
         durationInput.preferredSize.width = 60;
+        durationInput.enabled = false; // disabled by default
+
+        // Checkbox behavior to enable/disable duration input
+        customDurationCheckbox.onClick = function() {
+            durationInput.enabled = customDurationCheckbox.value;
+            if (customDurationCheckbox.value) {
+                durationInput.active = true; // focus the input when enabled
+            }
+        };
 
         // SLATEPANEL
         var slatePanel = mainGroup.add("panel", undefined, undefined, {name: "slatePanel"});
@@ -152,6 +154,7 @@
         function savePreferences() {
             var projectId = getProjectId();
             app.settings.saveSetting(SCRIPT_NAME, "projectId", projectId);
+            app.settings.saveSetting(SCRIPT_NAME, "customDuration", customDurationCheckbox.value.toString());
             app.settings.saveSetting(SCRIPT_NAME, "duration", durationInput.text);
             app.settings.saveSetting(SCRIPT_NAME, "lens", lensInput.text);
             app.settings.saveSetting(SCRIPT_NAME, "artist", artistInput.text);
@@ -166,6 +169,10 @@
                 
                 // Only load preferences if they're for the current project
                 if (savedProjectId === currentProjectId && currentProjectId !== "") {
+                    if (app.settings.haveSetting(SCRIPT_NAME, "customDuration")) {
+                        customDurationCheckbox.value = app.settings.getSetting(SCRIPT_NAME, "customDuration") === "true";
+                        durationInput.enabled = customDurationCheckbox.value;
+                    }
                     if (app.settings.haveSetting(SCRIPT_NAME, "duration")) {
                         durationInput.text = app.settings.getSetting(SCRIPT_NAME, "duration");
                     }
@@ -186,15 +193,43 @@
         
         // Button functionality with real processing
         durationButton.onClick = function() {
-            var duration = parseInt(durationInput.text);
+            var duration;
             
-            // Validate duration
-            if (isNaN(duration) || duration <= 0 || duration > MAX_DURATION) {
-                alert("Please enter a valid duration between 1 and " + MAX_DURATION + " frames.", SCRIPT_NAME);
-                return;
+            if (customDurationCheckbox.value) {
+                // Use custom duration from input field
+                duration = parseInt(durationInput.text);
+                
+                // Validate custom duration
+                if (isNaN(duration) || duration <= 0 || duration > MAX_DURATION) {
+                    alert("Please enter a valid duration between 1 and " + MAX_DURATION + " frames.", SCRIPT_NAME);
+                    return;
+                }
+            } else {
+                // Use footage duration (original behavior)
+                var sequenceComp = findCompByName("Sequence");
+                if (!sequenceComp) {
+                    alert("Sequence comp not found.", SCRIPT_NAME);
+                    return;
+                }
+                
+                // Find the footage layer in the Sequence comp
+                var footageLayer = findFootageLayer(sequenceComp);
+                if (!footageLayer) {
+                    alert("No footage layer found in Sequence comp.", SCRIPT_NAME);
+                    return;
+                }
+                
+                // Get duration from footage layer (convert from seconds to frames)
+                duration = Math.round(footageLayer.source.duration * sequenceComp.frameRate);
+                
+                // Validate footage duration
+                if (duration <= 0 || duration > MAX_DURATION) {
+                    alert("Footage duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
+                    return;
+                }
             }
             
-            // Save preferences and load them when button is clicked (not during UI construction)
+            // Save preferences 
             savePreferences();
             
             // Process comp durations
@@ -204,7 +239,8 @@
                 var result = processCompDurations(duration);
                 
                 if (result.success) {
-                    statusText.text = "Status: Duration set to " + duration + " frames";
+                    var source = customDurationCheckbox.value ? "(custom)" : "(from footage)";
+                    statusText.text = "Status: Duration set to " + duration + " frames " + source;
                 } else {
                     statusText.text = "Status: Error occurred";
                     alert(result.message, SCRIPT_NAME);
@@ -218,11 +254,19 @@
         };
         
         slateButton.onClick = function() {
-            var duration = parseInt(durationInput.text);
+            // Get duration from Output comp - 1 frame
+            var outputComp = findCompByName("Output");
+            if (!outputComp) {
+                alert("Output comp not found.", SCRIPT_NAME);
+                return;
+            }
+            
+            // Calculate duration from Output comp (convert from seconds to frames, minus 1 for slate frame)
+            var duration = Math.round(outputComp.duration * outputComp.frameRate) - 1;
             
             // Validate duration
-            if (isNaN(duration) || duration <= 0 || duration > MAX_DURATION) {
-                alert("Please enter a valid duration between 1 and " + MAX_DURATION + " frames.", SCRIPT_NAME);
+            if (duration <= 0 || duration > MAX_DURATION) {
+                alert("Output comp duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
                 return;
             }
             
@@ -509,56 +553,12 @@
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
     
-    
-    // Update existing slate layer timing (assumes slate is already in output comp)
-    function updateSlateInOutput(outputComp, slateComp) {
-        // Look for existing slate layer
-        for (var i = 1; i <= outputComp.numLayers; i++) {
-            if (outputComp.layer(i).source === slateComp) {
-                var slateLayer = outputComp.layer(i);
-                
-                // Get the Output comp's start time and calculate frame 1 in seconds
-                var outputStartTime = outputComp.displayStartTime;
-                var oneFrameDuration = 1 / outputComp.frameRate;
-                
-                // Set slate to appear on the first frame of the Output comp for 1 frame duration
-                slateLayer.startTime = outputStartTime;
-                slateLayer.outPoint = outputStartTime + oneFrameDuration;
-                
-                break; // Only update the first slate layer found
-            }
-        }
-    }
-    
     // Helper function to find comp by exact name
     function findCompByName(name) {
         for (var i = 1; i <= app.project.numItems; i++) {
             var item = app.project.item(i);
             if (item instanceof CompItem && item.name === name) {
                 return item;
-            }
-        }
-        return null;
-    }
-    
-    // Helper function to find comps starting with prefix
-    function findCompsStartingWith(prefix) {
-        var comps = [];
-        for (var i = 1; i <= app.project.numItems; i++) {
-            var item = app.project.item(i);
-            if (item instanceof CompItem && item.name.indexOf(prefix) === 0) {
-                comps.push(item);
-            }
-        }
-        return comps;
-    }
-    
-    // Helper function to find layer by exact name in a comp
-    function findLayerByName(comp, layerName) {
-        for (var i = 1; i <= comp.numLayers; i++) {
-            var layer = comp.layer(i);
-            if (layer.name === layerName) {
-                return layer;
             }
         }
         return null;
@@ -575,21 +575,20 @@
         return null;
     }
     
-    // Helper function to pad numbers with zero
-    function padZero(num) {
-        return (num < 10 ? "0" : "") + num;
-    }
-    
-    // Get project display name (without extension) - equivalent to expression version
-    function getProjectDisplayName() {
-        if (app.project.file) {
-            // ExtendScript equivalent of: thisProject.fullPath.replace(/\\/g, "/").split("/").pop().replace(/\.[^\.]+$/, "")
-            var fullPath = app.project.file.fsName.replace(/\\/g, "/");
-            var fileName = fullPath.split("/").pop();
-            return fileName.replace(/\.[^\.]+$/, '');
-        } else {
-            return "Untitled Project";
+    // Helper function to find footage layer in a comp (excludes solids, adjustment layers, etc.)
+    function findFootageLayer(comp) {
+        for (var i = 1; i <= comp.numLayers; i++) {
+            var layer = comp.layer(i);
+            
+            // Check if it's a footage layer (has source, not adjustment layer, not solid)
+            if (layer.source && 
+                !layer.adjustmentLayer && 
+                layer.source.typeName !== "Solid" &&
+                layer.source.mainSource) {
+                return layer;
+            }
         }
+        return null;
     }
     
     // Get unique project identifier for preferences
@@ -632,7 +631,7 @@
         } else {
             // No version found, start with v0001
             baseNameWithoutVersion = currentName.replace(/\.aep$/i, '');
-            versionLength = 4;
+            versionLength = 3;
             newVersion = 1;
         }
         
