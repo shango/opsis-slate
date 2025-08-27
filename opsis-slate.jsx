@@ -1,6 +1,6 @@
 /*
  * Comp Duration Manager with Slate Generator for After Effects
- * Version: 1.0
+ * Version: 0.1.0
  * 
  * This script creates a dockable UI panel for setting comp durations
  * and generating/updating slate frames with project information.
@@ -48,41 +48,15 @@
         var durationPanel = mainGroup.add("panel", undefined, undefined, {name: "durationPanel"});
         durationPanel.text = "Duration";
         durationPanel.orientation = "row";
-        durationPanel.alignChildren = ["left","top"];
+        durationPanel.alignChildren = ["left","center"];
         durationPanel.spacing = 10;
         durationPanel.margins = 10;
 
-        // DURATIONGROUP
-        var durationGroup = durationPanel.add("group", undefined, {name: "durationGroup"});
-        durationGroup.orientation = "row";
-        durationGroup.alignChildren = ["left","center"];
-        durationGroup.spacing = 10;
-        durationGroup.margins = 0;
-
-        var durationButton = durationGroup.add("button", undefined, undefined, {name: "durationButton"});
+        var durationButton = durationPanel.add("button", undefined, undefined, {name: "durationButton"});
         durationButton.text = "Set Duration";
 
-        // CUSTOMDURATIONGROUP - second row for custom duration option
-        var customDurationGroup = durationPanel.add("group", undefined, {name: "customDurationGroup"});
-        customDurationGroup.orientation = "row";
-        customDurationGroup.alignChildren = ["left","center"];
-        customDurationGroup.spacing = 10;
-        customDurationGroup.margins = 0;
-
-        var customDurationCheckbox = customDurationGroup.add("checkbox", undefined, undefined, {name: "customDurationCheckbox"});
-        customDurationCheckbox.text = "Custom Duration";
-
-        var durationInput = customDurationGroup.add('edittext {properties: {name: "durationInput"}}');
-        durationInput.preferredSize.width = 60;
-        durationInput.enabled = false; // disabled by default
-
-        // Checkbox behavior to enable/disable duration input
-        customDurationCheckbox.onClick = function() {
-            durationInput.enabled = customDurationCheckbox.value;
-            if (customDurationCheckbox.value) {
-                durationInput.active = true; // focus the input when enabled
-            }
-        };
+        var seqDurationLabel = durationPanel.add("statictext", undefined, "Set to Seq Duration");
+        seqDurationLabel.alignment = ["left","center"];
 
         // SLATEPANEL
         var slatePanel = mainGroup.add("panel", undefined, undefined, {name: "slatePanel"});
@@ -154,8 +128,6 @@
         function savePreferences() {
             var projectId = getProjectId();
             app.settings.saveSetting(SCRIPT_NAME, "projectId", projectId);
-            app.settings.saveSetting(SCRIPT_NAME, "customDuration", customDurationCheckbox.value.toString());
-            app.settings.saveSetting(SCRIPT_NAME, "duration", durationInput.text);
             app.settings.saveSetting(SCRIPT_NAME, "lens", lensInput.text);
             app.settings.saveSetting(SCRIPT_NAME, "artist", artistInput.text);
             app.settings.saveSetting(SCRIPT_NAME, "comment", noteInput.text);
@@ -169,13 +141,6 @@
                 
                 // Only load preferences if they're for the current project
                 if (savedProjectId === currentProjectId && currentProjectId !== "") {
-                    if (app.settings.haveSetting(SCRIPT_NAME, "customDuration")) {
-                        customDurationCheckbox.value = app.settings.getSetting(SCRIPT_NAME, "customDuration") === "true";
-                        durationInput.enabled = customDurationCheckbox.value;
-                    }
-                    if (app.settings.haveSetting(SCRIPT_NAME, "duration")) {
-                        durationInput.text = app.settings.getSetting(SCRIPT_NAME, "duration");
-                    }
                     if (app.settings.haveSetting(SCRIPT_NAME, "lens")) {
                         lensInput.text = app.settings.getSetting(SCRIPT_NAME, "lens");
                     }
@@ -193,40 +158,27 @@
         
         // Button functionality with real processing
         durationButton.onClick = function() {
-            var duration;
+            // Use footage duration
+            var sequenceComp = findCompByName("Sequence");
+            if (!sequenceComp) {
+                alert("Sequence comp not found.", SCRIPT_NAME);
+                return;
+            }
             
-            if (customDurationCheckbox.value) {
-                // Use custom duration from input field
-                duration = parseInt(durationInput.text);
-                
-                // Validate custom duration
-                if (isNaN(duration) || duration <= 0 || duration > MAX_DURATION) {
-                    alert("Please enter a valid duration between 1 and " + MAX_DURATION + " frames.", SCRIPT_NAME);
-                    return;
-                }
-            } else {
-                // Use footage duration (original behavior)
-                var sequenceComp = findCompByName("Sequence");
-                if (!sequenceComp) {
-                    alert("Sequence comp not found.", SCRIPT_NAME);
-                    return;
-                }
-                
-                // Find the footage layer in the Sequence comp
-                var footageLayer = findFootageLayer(sequenceComp);
-                if (!footageLayer) {
-                    alert("No footage layer found in Sequence comp.", SCRIPT_NAME);
-                    return;
-                }
-                
-                // Get duration from footage layer (convert from seconds to frames)
-                duration = Math.round(footageLayer.source.duration * sequenceComp.frameRate);
-                
-                // Validate footage duration
-                if (duration <= 0 || duration > MAX_DURATION) {
-                    alert("Footage duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
-                    return;
-                }
+            // Find the footage layer in the Sequence comp
+            var footageLayer = findFootageLayer(sequenceComp);
+            if (!footageLayer) {
+                alert("No footage layer found in Sequence comp.", SCRIPT_NAME);
+                return;
+            }
+            
+            // Get duration from footage layer (convert from seconds to frames)
+            var duration = Math.round(footageLayer.source.duration * sequenceComp.frameRate);
+            
+            // Validate footage duration
+            if (duration <= 0 || duration > MAX_DURATION) {
+                alert("Footage duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
+                return;
             }
             
             // Save preferences 
@@ -239,8 +191,7 @@
                 var result = processCompDurations(duration);
                 
                 if (result.success) {
-                    var source = customDurationCheckbox.value ? "(custom)" : "(from footage)";
-                    statusText.text = "Status: Duration set to " + duration + " frames " + source;
+                    statusText.text = "Status: Duration set to " + duration + " frames (from footage)";
                 } else {
                     statusText.text = "Status: Error occurred";
                     alert(result.message, SCRIPT_NAME);
@@ -317,17 +268,6 @@
         panel.layout.layout(true);
         
         return panel;
-    }
-    
-    // Main processing function (kept for backward compatibility)
-    function processComps(duration, lens, artist, comment) {
-        var compResult = processCompDurations(duration);
-        var slateResult = processSlateUpdate(duration, lens, artist, comment);
-        
-        return {
-            success: compResult.success || slateResult.success,
-            message: compResult.message + (slateResult.message ? "\n" + slateResult.message : "")
-        };
     }
     
     // Process comp durations only

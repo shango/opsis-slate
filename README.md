@@ -2,11 +2,13 @@
 
 A tool for managing composition durations and automatically generating a slate frame in templated After Effects projects.
 
+version 0.1.0
+
 ## Installation
 
 ### Step 1: Download Files
 - `opsis-slate.jsx` - Main script file
-- `logo.jpg` - Your company logo (90x90 pixels) - *optional*
+- `logo.png` - Your company logo (recommended 100x40 pixels) - *optional*
 
 ### Step 2: Install Script
 
@@ -22,7 +24,19 @@ C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\scrip
 
 **For Dockable Panel:** Place in the `ScriptUI Panels` subfolder instead of `Scripts`
 
-### Step 3: Launch in After Effects
+### Step 3: Logo Setup (Optional)
+To display a logo in the UI:
+1. Create a folder named `logo` in the same directory as the script
+2. Place your `logo.png` file inside the `logo` folder
+3. Final structure should be:
+   ```
+   ScriptUI Panels/
+   ├── opsis-slate.jsx
+   └── logo/
+       └── logo.png
+   ```
+
+### Step 4: Launch in After Effects
 
 **As Standard Script:**
 - Go to `File > Scripts > opsis-slate.jsx`
@@ -56,13 +70,14 @@ Create a composition named `SLATE_TEMPLATE` containing:
 
 ## Usage
 
-1. **Set Duration:** Enter frame count, click "Set Duration"
+1. **Set Duration:** Click "Set Duration" to automatically set composition durations based on footage in the Sequence comp
 2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"  
 3. **Version Up:** Click "Version Up" to save incremented project version
 
 The script will:
-- Set Sequence and Working to your duration
-- Set Output to duration + 1 (for slate frame)
+- Automatically detect the footage duration from the Sequence comp
+- Set Sequence and Working comps to the detected duration
+- Set Output comp to duration + 1 (for slate frame)
 - Update Time Remap on the three Working comp layers in SLATE_TEMPLATE
 
 ## Expressions for Text Layers no controlled by the Script
@@ -112,8 +127,14 @@ adjFrames + " F " + pad(h) + ":" + pad(m) + ":" + pad(s) + ":" + pad(fr) + " @" 
 ### Frame Range expression
 
 ```jsx
-var c = comp("Output"); 
-Math.round(c.displayStartTime / c.frameDuration + c.displayStartTime) + " - " + Math.round((c.displayStartTime + c.duration) / c.frameDuration + c.displayStartTime - 1);
+var c = comp("Output");
+
+// Convert times to frames
+var startFrame = Math.round(c.displayStartTime / c.frameDuration);
+var endFrame = Math.round(((c.displayStartTime + c.duration) - c.displayStartTime) / c.frameDuration);
+
+startFrame + " - " + endFrame;
+
 ```
 
 ### Plate name expression
