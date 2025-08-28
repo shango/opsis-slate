@@ -8,8 +8,10 @@ The script will:
 - Automatically detect the footage duration from the Sequence comp
 - Set Sequence and Working comps to the detected duration
 - Set Output comp to duration + 1 (for slate frame)
-- Update Time Remap on the three Working comp layers in SLATE_TEMPLATE to display first, middle and last frame of Output comp.
-- Verion up will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
+- Time remaps 3 output layers to display First, Mid and Last frames in slate.
+- Input Artist, lens and a submission note into the UI panel and update the slate with a button press.
+- All slate template layers can be arrainged as necessary for the client.
+- Verion button on UI panel will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
 
 ![alt text](https://github.com/shango/opsis-slate/blob/main/logo/screen_ui_panel.png?raw=true)
 
