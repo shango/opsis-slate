@@ -8,7 +8,9 @@ version 0.1.0
 
 ### Step 1: Download Files
 - `opsis-slate.jsx` - Main script file
-- `logo.png` - Your company logo (recommended 100x40 pixels) - *optional*
+- `logo.png` - Opsis logo (recommended 100x33 pixels)
+- `README.md` - Installation and setup instructions
+- `slate_template.aet` - Starter template file
 
 ### Step 2: Install Script
 
@@ -57,18 +59,23 @@ Your After Effects project must contain these compositions:
 
 ### SLATE_TEMPLATE Setup
 
-Create a composition named `SLATE_TEMPLATE` containing:
+Arrainge layers to suit the template design inside `SLATE_TEMPLATE` comp.
+
+2. **Text layers** for slate information
+   There are 2 types of text layers in here. They can moved around anywhere you need for layout.
+   1. Layers with expressions directly in the "Source Text" property. (see Expressions section below)
+   2. Layers controlled by the script with hooks placed in the comment field.
+   3. Template includes an additional layer simply with info headings.
 
 1. **Three instances of Working comp** with comments in their comment fields:
+   **Time Remap effects** should be enabled on the three Working comp layers, done by default in the template file.
+ 
    - One layer with comment: `FIRST`
    - One layer with comment: `MIDDLE`
    - One layer with comment: `LAST`
 
-2. **Text layers** for slate information (see Expressions section below)
-
-3. **Time Remap effects** should be enabled on the three Working comp layers
-
 ## Usage
+In the Opsis-Slate UI panel:
 
 1. **Set Duration:** Click "Set Duration" to automatically set composition durations based on footage in the Sequence comp
 2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"  
@@ -78,9 +85,12 @@ The script will:
 - Automatically detect the footage duration from the Sequence comp
 - Set Sequence and Working comps to the detected duration
 - Set Output comp to duration + 1 (for slate frame)
-- Update Time Remap on the three Working comp layers in SLATE_TEMPLATE
+- Update Time Remap on the three Working comp layers in SLATE_TEMPLATE to display first, middle and last frame of Output comp.
+- Verion up will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
 
-## Expressions for Text Layers no controlled by the Script
+## Expressions for Text Layers not controlled by the Script
+
+These expressions are supplied here in case one gets removed from a layer and needs to be replaced.
 
 ### Project Name expression
 
@@ -172,3 +182,4 @@ for (var i = 1; i <= sequenceComp.numLayers; i++) {
 // Return the footage layer name without extension
 footageName;
 ```
+

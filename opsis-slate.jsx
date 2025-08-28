@@ -86,6 +86,9 @@
         var lensInput = slateGroup.add('edittext {properties: {name: "lensInput"}}');
         lensInput.preferredSize.width = 60;
 
+        var lensText = slateGroup.add("statictext", undefined, undefined, {name: "lensText"});
+        lensText.text = "mm";
+
         // NOTEGROUP
         var noteGroup = slatePanel.add("group", undefined, {name: "noteGroup"});
         noteGroup.orientation = "column";
@@ -422,7 +425,7 @@
         // Define template variables and their values (only user inputs)
         var templateVars = {
             "{{artist}}": artist || "",
-            "{{lens}}": lens || "",
+            "{{lens}}": lens || "" + "mm",
             "{{comment}}": comment || ""
         };
         
