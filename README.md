@@ -4,14 +4,12 @@ A tool for managing composition durations and automatically generating a slate f
 
 version 0.1.2
 
-The script will:
-- Automatically detect the footage duration from the Sequence comp
-- Set Sequence and Working comps to the detected duration
-- Set Output comp to duration + 1 (for slate frame)
-- Time remaps 3 output layers to display First, Mid and Last frames in slate.
+Features:
+- Automatically detects the footage duration from the Sequence comp and sets all comps to duration.
 - Input Artist, lens and a submission note into the UI panel and update the slate with a button press.
-- All slate template layers can be arrainged as necessary for the client.
-- Verion button on UI panel will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
+- All slate template layers can be arrainged as necessary for the client needs.
+- Time remaps 3 output layers to display First, Mid and Last frames in slate.
+- Verion up button on UI panel will increment and save as next version increment.
 
 ![alt text](https://github.com/shango/opsis-slate/blob/main/logo/screen_ui_panel.png?raw=true)
 
