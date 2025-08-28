@@ -1,6 +1,6 @@
 /*
  * Comp Duration Manager with Slate Generator for After Effects
- * Version: 0.1.0
+ * Version: 0.1.1
  * 
  * This script creates a dockable UI panel for setting comp durations
  * and generating/updating slate frames with project information.
@@ -425,7 +425,7 @@
         // Define template variables and their values (only user inputs)
         var templateVars = {
             "{{artist}}": artist || "",
-            "{{lens}}": lens || "" + "mm",
+            "{{lens}}": lens ? lens + "mm" : "",
             "{{comment}}": comment || ""
         };
         

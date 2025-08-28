@@ -2,7 +2,16 @@
 
 A tool for managing composition durations and automatically generating a slate frame in templated After Effects projects.
 
-version 0.1.0
+version 0.1.1
+
+The script will:
+- Automatically detect the footage duration from the Sequence comp
+- Set Sequence and Working comps to the detected duration
+- Set Output comp to duration + 1 (for slate frame)
+- Update Time Remap on the three Working comp layers in SLATE_TEMPLATE to display first, middle and last frame of Output comp.
+- Verion up will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
+
+![alt text](https://github.com/shango/opsis-slate/logo/screen_ui_panle.png?raw=true)
 
 ## Installation
 
@@ -12,11 +21,11 @@ version 0.1.0
 - `README.md` - Installation and setup instructions
 - `slate_template.aet` - Starter template file
 
-### Step 2: Install Script
+### Step 2: Install Script - Place all unzipped files and folder into the ScriptUI Panel folder
 
 #### Windows:
 ```
-C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\script ui panel
+C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\scriptUI Panel
 ```
 
 #### macOS:
@@ -26,19 +35,9 @@ C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\scrip
 
 **For Dockable Panel:** Place in the `ScriptUI Panels` subfolder instead of `Scripts`
 
-### Step 3: Logo Setup (Optional)
-To display a logo in the UI:
-1. Create a folder named `logo` in the same directory as the script
-2. Place your `logo.png` file inside the `logo` folder
-3. Final structure should be:
-   ```
-   ScriptUI Panels/
-   ├── opsis-slate.jsx
-   └── logo/
-       └── logo.png
-   ```
 
-### Step 4: Launch in After Effects
+### Step 3: Launch in After Effects - Go to Window Menu > opsis-slate
+
 
 **As Standard Script:**
 - Go to `File > Scripts > opsis-slate.jsx`
@@ -81,12 +80,6 @@ In the Opsis-Slate UI panel:
 2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"  
 3. **Version Up:** Click "Version Up" to save incremented project version
 
-The script will:
-- Automatically detect the footage duration from the Sequence comp
-- Set Sequence and Working comps to the detected duration
-- Set Output comp to duration + 1 (for slate frame)
-- Update Time Remap on the three Working comp layers in SLATE_TEMPLATE to display first, middle and last frame of Output comp.
-- Verion up will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
 
 ## Expressions for Text Layers not controlled by the Script
 
@@ -119,7 +112,7 @@ var fps = Math.round(1 / c.frameDuration);
 var totalFrames = Math.round(d * fps);
 
 // subtract one frame
-var adjFrames = totalFrames - 1;
+var adjFrames = totalFrames;
 var adjSeconds = (adjFrames / fps);
 
 var totalSeconds = Math.floor(adjSeconds);
@@ -132,6 +125,7 @@ var fr = Math.floor((adjSeconds % 1) * fps);
 function pad(n) { return ("0" + n).slice(-2); }
 
 adjFrames + " F " + pad(h) + ":" + pad(m) + ":" + pad(s) + ":" + pad(fr) + " @" + fps + "fps";
+
 ```
 
 ### Frame Range expression
@@ -140,8 +134,8 @@ adjFrames + " F " + pad(h) + ":" + pad(m) + ":" + pad(s) + ":" + pad(fr) + " @" 
 var c = comp("Output");
 
 // Convert times to frames
-var startFrame = Math.round(c.displayStartTime / c.frameDuration);
-var endFrame = Math.round(((c.displayStartTime + c.duration) - c.displayStartTime) / c.frameDuration);
+var startFrame = Math.round(c.displayStartTime / c.frameDuration) + 1;
+var endFrame = Math.round((c.displayStartTime + c.duration) / c.frameDuration);
 
 startFrame + " - " + endFrame;
 
