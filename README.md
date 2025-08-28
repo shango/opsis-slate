@@ -2,7 +2,7 @@
 
 A tool for managing composition durations and automatically generating a slate frame in templated After Effects projects.
 
-version 0.1.1
+version 0.1.2
 
 The script will:
 - Automatically detect the footage duration from the Sequence comp
