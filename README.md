@@ -76,6 +76,8 @@ In the Opsis-Slate UI panel:
 2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"  
 3. **Version Up:** Click "Version Up" to save incremented project version
 
+### Layers controlled by the UI script
+The script finds the layers in the slate_template by looking for the variable in the layer's comment field. ie. {{Artist}}, {{Lens}}, {{First}}
 
 ## Expressions for Text Layers not controlled by the Script
 
