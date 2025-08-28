@@ -11,7 +11,7 @@ The script will:
 - Update Time Remap on the three Working comp layers in SLATE_TEMPLATE to display first, middle and last frame of Output comp.
 - Verion up will increment the current version. If you are a version behind the most recent, it will skip over it and version up from there.
 
-![alt text](https://github.com/shango/opsis-slate/logo/screen_ui_panle.png?raw=true)
+![alt text](https://github.com/shango/opsis-slate/main/logo/screen_ui_panle.png?raw=true)
 
 ## Installation
 
