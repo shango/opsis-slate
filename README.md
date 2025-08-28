@@ -15,13 +15,13 @@ Features:
 
 ## Installation
 
-### Step 1: Download Files
+### Step 1: Download and unzip the file opsis-slate.zip
 - `opsis-slate.jsx` - Main script file
 - `logo.png` - Opsis logo (recommended 100x33 pixels)
 - `README.md` - Installation and setup instructions
 - `slate_template.aet` - Starter template file
 
-### Step 2: Install Script - Place all unzipped files and folder into the ScriptUI Panel folder
+### Step 2: Install Script - Place all unzipped files and folders into the ScriptUI Panel folder
 
 #### Windows:
 ```
@@ -33,11 +33,7 @@ C:\Program Files\Adobe\Adobe After Effects [Version]\Support Files\Scripts\scrip
 /Applications/Adobe After Effects [Version]/Scripts/script ui panel
 ```
 
-**For Dockable Panel:** Place in the `ScriptUI Panels` subfolder instead of `Scripts`
-
-
-### Step 3: Launch in After Effects - Go to Window Menu > opsis-slate
-
+### Step 3: Launch in After Effects
 
 **As Standard Script:**
 - Go to `File > Scripts > opsis-slate.jsx`
