@@ -58,6 +58,13 @@
         var seqDurationLabel = durationPanel.add("statictext", undefined, "Set to Seq Duration");
         seqDurationLabel.alignment = ["left","center"];
 
+        var customLabel = durationPanel.add("statictext", undefined, "Custom");
+        customLabel.alignment = ["left","center"];
+
+        var customInput = durationPanel.add('edittext {properties: {name: "customInput"}}');
+        customInput.preferredSize.width = 40;
+        customInput.characters = 4;
+
         // SLATEPANEL
         var slatePanel = mainGroup.add("panel", undefined, undefined, {name: "slatePanel"});
         slatePanel.text = "Slate Info";
@@ -97,6 +104,7 @@
         noteGroup.margins = 0;
 
         var noteInput = noteGroup.add('edittext {properties: {name: "noteInput", multiline: true, scrolling: false}}');
+        noteInput.text = "Notes";
         noteInput.preferredSize.width = 220;
         noteInput.preferredSize.height = 60;
 
@@ -161,40 +169,64 @@
         
         // Button functionality with real processing
         durationButton.onClick = function() {
-            // Use footage duration
-            var sequenceComp = findCompByName("Sequence");
-            if (!sequenceComp) {
-                alert("Sequence comp not found.", SCRIPT_NAME);
-                return;
+            var duration;
+            var durationSource;
+
+            // Check if custom duration is specified
+            var customDuration = customInput.text.replace(/\s/g, ''); // Remove whitespace
+
+            if (customDuration !== "") {
+                // Use custom duration
+                duration = parseInt(customDuration, 10);
+
+                if (isNaN(duration) || duration <= 0 || duration > MAX_DURATION) {
+                    alert("Custom duration must be a number between 1 and " + MAX_DURATION + " frames.", SCRIPT_NAME);
+                    return;
+                }
+
+                durationSource = "custom";
+            } else {
+                // Use footage duration
+                var sequenceComp = findCompByName("Sequence");
+                if (!sequenceComp) {
+                    alert("Sequence comp not found.", SCRIPT_NAME);
+                    return;
+                }
+
+                // Find the footage layer in the Sequence comp
+                var footageLayer = findFootageLayer(sequenceComp);
+                if (!footageLayer) {
+                    alert("No footage layer found in Sequence comp.", SCRIPT_NAME);
+                    return;
+                }
+
+                // Get duration from footage layer (convert from seconds to frames)
+                duration = Math.round(footageLayer.source.duration * sequenceComp.frameRate);
+
+                // Validate footage duration
+                if (duration <= 0 || duration > MAX_DURATION) {
+                    alert("Footage duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
+                    return;
+                }
+
+                durationSource = "footage";
             }
-            
-            // Find the footage layer in the Sequence comp
-            var footageLayer = findFootageLayer(sequenceComp);
-            if (!footageLayer) {
-                alert("No footage layer found in Sequence comp.", SCRIPT_NAME);
-                return;
-            }
-            
-            // Get duration from footage layer (convert from seconds to frames)
-            var duration = Math.round(footageLayer.source.duration * sequenceComp.frameRate);
-            
-            // Validate footage duration
-            if (duration <= 0 || duration > MAX_DURATION) {
-                alert("Footage duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
-                return;
-            }
-            
-            // Save preferences 
+
+            // Save preferences
             savePreferences();
-            
+
             // Process comp durations
             app.beginUndoGroup("Set Comp Durations");
-            
+
             try {
                 var result = processCompDurations(duration);
-                
+
                 if (result.success) {
-                    statusText.text = "Status: Duration set to " + duration + " frames (from footage)";
+                    if (durationSource === "custom") {
+                        statusText.text = "Status: Duration set to " + duration + " frames (custom)";
+                    } else {
+                        statusText.text = "Status: Duration set to " + duration + " frames (from footage)";
+                    }
                 } else {
                     statusText.text = "Status: Error occurred";
                     alert(result.message, SCRIPT_NAME);
@@ -203,7 +235,7 @@
                 alert("Error: " + e.toString(), SCRIPT_NAME);
                 statusText.text = "Status: Error occurred";
             }
-            
+
             app.endUndoGroup();
         };
         
