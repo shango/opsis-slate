@@ -98,7 +98,7 @@
 
         // NOTEGROUP
         var noteGroup = slatePanel.add("group", undefined, {name: "noteGroup"});
-        noteInput.text = "Notes";
+        noteGroup.text = "Notes";
         noteGroup.orientation = "column";
         noteGroup.alignChildren = ["left","center"];
         noteGroup.spacing = 10;

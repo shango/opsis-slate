@@ -72,8 +72,8 @@ Arrainge layers to suit the template design inside `SLATE_TEMPLATE` comp.
 ## Usage
 In the Opsis-Slate UI panel:
 
-1. **Set Duration:** Click "Set Duration" to automatically set composition durations based on footage in the Sequence comp
-2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"  
+1. **Set Duration:** Click "Set Duration" to automatically set composition durations based on footage in the Sequence comp. Optionally, enter a custom frame count in the "Custom" field to override the footage duration.
+2. **Update Slate:** Enter lens/artist/comment info, click "Update Slate"
 3. **Version Up:** Click "Version Up" to save incremented project version
 
 ### Layers controlled by the UI script
