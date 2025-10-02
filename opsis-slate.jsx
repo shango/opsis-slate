@@ -46,7 +46,7 @@
 
         // DURATIONPANEL
         var durationPanel = mainGroup.add("panel", undefined, undefined, {name: "durationPanel"});
-        durationPanel.text = "Duration";
+        durationPanel.text = "Set Durations (to footage by default)";
         durationPanel.orientation = "row";
         durationPanel.alignChildren = ["left","center"];
         durationPanel.spacing = 10;
@@ -55,7 +55,7 @@
         var durationButton = durationPanel.add("button", undefined, undefined, {name: "durationButton"});
         durationButton.text = "Set Duration";
 
-        var seqDurationLabel = durationPanel.add("statictext", undefined, "Set to Seq Duration");
+        var seqDurationLabel = durationPanel.add("statictext", undefined, "");
         seqDurationLabel.alignment = ["left","center"];
 
         var customLabel = durationPanel.add("statictext", undefined, "Custom");
@@ -98,13 +98,13 @@
 
         // NOTEGROUP
         var noteGroup = slatePanel.add("group", undefined, {name: "noteGroup"});
+        noteInput.text = "Notes";
         noteGroup.orientation = "column";
         noteGroup.alignChildren = ["left","center"];
         noteGroup.spacing = 10;
         noteGroup.margins = 0;
 
         var noteInput = noteGroup.add('edittext {properties: {name: "noteInput", multiline: true, scrolling: false}}');
-        noteInput.text = "Notes";
         noteInput.preferredSize.width = 220;
         noteInput.preferredSize.height = 60;
 
