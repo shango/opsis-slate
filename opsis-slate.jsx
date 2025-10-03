@@ -98,11 +98,13 @@
 
         // NOTEGROUP
         var noteGroup = slatePanel.add("group", undefined, {name: "noteGroup"});
-        noteGroup.text = "Notes";
         noteGroup.orientation = "column";
         noteGroup.alignChildren = ["left","center"];
         noteGroup.spacing = 10;
         noteGroup.margins = 0;
+
+        var noteLabel = noteGroup.add("statictext", undefined, undefined, {name: "noteLabel"});
+        noteLabel.text = "Notes";
 
         var noteInput = noteGroup.add('edittext {properties: {name: "noteInput", multiline: true, scrolling: false}}');
         noteInput.preferredSize.width = 220;
