@@ -441,8 +441,10 @@
         for (var i = 1; i <= slateComp.numLayers; i++) {
             var layer = slateComp.layer(i);
 
-            if (layer instanceof TextLayer) {
+            // Check if it's a text layer by checking if it has Source Text property
+            try {
                 var sourceText = layer.property("Source Text");
+                if (!sourceText) continue;
                 var commentField = layer.comment;
                 var templateText;
 
@@ -511,6 +513,8 @@
                     textDoc.text = updatedText;
                     sourceText.setValue(textDoc);
                 }
+            } catch (e) {
+                // Not a text layer, skip
             }
         }
     }
@@ -575,28 +579,34 @@
         for (var i = 1; i <= slateComp.numLayers; i++) {
             var layer = slateComp.layer(i);
 
-            if (layer instanceof TextLayer && layer.comment) {
-                var commentField = layer.comment;
+            // Check if it's a text layer by checking if it has Source Text property
+            try {
+                var sourceText = layer.property("Source Text");
+                if (sourceText && layer.comment) {
+                    var commentField = layer.comment;
 
-                // Parse comment field: template;value
-                if (commentField.indexOf(";") !== -1) {
-                    var parts = commentField.split(";");
-                    var templateText = parts[0];
-                    var dataValue = parts[1] || "";
+                    // Parse comment field: template;value
+                    if (commentField.indexOf(";") !== -1) {
+                        var parts = commentField.split(";");
+                        var templateText = parts[0];
+                        var dataValue = parts[1] || "";
 
-                    // Check which template variable this layer contains
-                    if (templateText.indexOf("{{artist}}") !== -1) {
-                        values.artist = dataValue;
-                    }
+                        // Check which template variable this layer contains
+                        if (templateText.indexOf("{{artist}}") !== -1) {
+                            values.artist = dataValue;
+                        }
 
-                    if (templateText.indexOf("{{lens}}") !== -1) {
-                        values.lens = dataValue;
-                    }
+                        if (templateText.indexOf("{{lens}}") !== -1) {
+                            values.lens = dataValue;
+                        }
 
-                    if (templateText.indexOf("{{comment}}") !== -1) {
-                        values.comment = dataValue;
+                        if (templateText.indexOf("{{comment}}") !== -1) {
+                            values.comment = dataValue;
+                        }
                     }
                 }
+            } catch (e) {
+                // Not a text layer, skip
             }
         }
 
