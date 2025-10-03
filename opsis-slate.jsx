@@ -1,6 +1,6 @@
 /*
  * Comp Duration Manager with Slate Generator for After Effects
- * Version: 0.1.2
+ * Version: 0.1.3
  * 
  * This script creates a dockable UI panel for setting comp durations
  * and generating/updating slate frames with project information.
