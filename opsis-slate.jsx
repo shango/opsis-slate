@@ -135,35 +135,15 @@
         // Status text
         var statusText = panel.add("statictext", undefined, "Status: Ready");
         
-        // Helper functions for preferences
-        function savePreferences() {
-            var projectId = getProjectId();
-            app.settings.saveSetting(SCRIPT_NAME, "projectId", projectId);
-            app.settings.saveSetting(SCRIPT_NAME, "lens", lensInput.text);
-            app.settings.saveSetting(SCRIPT_NAME, "artist", artistInput.text);
-            app.settings.saveSetting(SCRIPT_NAME, "comment", noteInput.text);
-        }
-        
+        // Load slate values from SLATE_TEMPLATE comp
         function loadPreferences() {
             try {
-                var currentProjectId = getProjectId();
-                var savedProjectId = app.settings.haveSetting(SCRIPT_NAME, "projectId") ? 
-                                    app.settings.getSetting(SCRIPT_NAME, "projectId") : "";
-                
-                // Only load preferences if they're for the current project
-                if (savedProjectId === currentProjectId && currentProjectId !== "") {
-                    if (app.settings.haveSetting(SCRIPT_NAME, "lens")) {
-                        lensInput.text = app.settings.getSetting(SCRIPT_NAME, "lens");
-                    }
-                    if (app.settings.haveSetting(SCRIPT_NAME, "artist")) {
-                        artistInput.text = app.settings.getSetting(SCRIPT_NAME, "artist");
-                    }
-                    if (app.settings.haveSetting(SCRIPT_NAME, "comment")) {
-                        noteInput.text = app.settings.getSetting(SCRIPT_NAME, "comment");
-                    }
-                }
+                var values = getSlateValues();
+                lensInput.text = values.lens;
+                artistInput.text = values.artist;
+                noteInput.text = values.comment;
             } catch (e) {
-                // Silently fail if there's an issue with preferences
+                // Silently fail if there's an issue loading from slate
             }
         }
         
@@ -212,9 +192,6 @@
                 durationSource = "footage";
             }
 
-            // Save preferences
-            savePreferences();
-
             // Process comp durations
             app.beginUndoGroup("Set Comp Durations");
 
@@ -255,10 +232,7 @@
                 alert("Output comp duration (" + duration + " frames) is outside valid range (1-" + MAX_DURATION + " frames).", SCRIPT_NAME);
                 return;
             }
-            
-            // Save preferences
-            savePreferences();
-            
+
             // Update slate
             app.beginUndoGroup("Update Slate");
             
@@ -443,37 +417,39 @@
     function updateSlateText(slateComp, outputComp, duration, lens, artist, comment) {
         // Get current date/time
         var now = new Date();
-        
+
         // Calculate duration in different formats
         var totalSeconds = duration / outputComp.frameRate;
         var hours = Math.floor(totalSeconds / 3600);
         var minutes = Math.floor((totalSeconds % 3600) / 60);
         var seconds = Math.floor(totalSeconds % 60);
         var frames = duration % Math.floor(outputComp.frameRate);
-        
+
         // Get project name (without extension)
         var projectName = app.project.file ? app.project.file.name.replace(/\.[^\.]+$/, '') : "Untitled Project";
-        
+
         // Define template variables and their values (only user inputs)
         var templateVars = {
             "{{artist}}": artist || "",
             "{{lens}}": lens ? lens + "mm" : "",
             "{{comment}}": comment || ""
         };
-        
+
         // Process all text layers in the slate comp
         for (var i = 1; i <= slateComp.numLayers; i++) {
             var layer = slateComp.layer(i);
-            
+
             if (layer instanceof TextLayer) {
                 var sourceText = layer.property("Source Text");
-                var templateText = layer.comment;
-                
-                // If comment is empty, this is the first run - store current text as template ONLY if it contains template variables
-                if (!templateText || templateText === "") {
+                var commentField = layer.comment;
+                var templateText;
+
+                // Parse comment field: template;value
+                if (!commentField || commentField === "") {
+                    // First run - store current text as template ONLY if it contains template variables
                     var currentText = sourceText.value.text;
                     var hasTemplateVars = false;
-                    
+
                     // Check if current text contains any template variables
                     for (var variable in templateVars) {
                         if (currentText.indexOf(variable) !== -1) {
@@ -481,38 +457,52 @@
                             break;
                         }
                     }
-                    
-                    // Only store as template and process if it contains template variables
-                    if (hasTemplateVars) {
-                        layer.comment = currentText;
-                        templateText = currentText;
-                    } else {
-                        // Skip this layer - it doesn't have template variables
-                        continue;
-                    }
-                } else {
-                    // Check if stored template contains any template variables
-                    var hasTemplateVars = false;
-                    for (var variable in templateVars) {
-                        if (templateText.indexOf(variable) !== -1) {
-                            hasTemplateVars = true;
-                            break;
-                        }
-                    }
-                    
-                    // Skip if no template variables found
+
+                    // Skip this layer if it doesn't have template variables
                     if (!hasTemplateVars) {
                         continue;
                     }
+
+                    templateText = currentText;
+                } else if (commentField.indexOf(";") !== -1) {
+                    // Comment contains semicolon delimiter - extract template part
+                    templateText = commentField.split(";")[0];
+                } else {
+                    // Old format (just template, no semicolon) - use as is
+                    templateText = commentField;
                 }
-                
-                var updatedText = templateText;
-                
-                // Replace all template variables (including blank ones)
+
+                // Check if template contains any template variables
+                var hasTemplateVars = false;
                 for (var variable in templateVars) {
-                    updatedText = updatedText.replace(new RegExp(escapeRegExp(variable), 'g'), templateVars[variable]);
+                    if (templateText.indexOf(variable) !== -1) {
+                        hasTemplateVars = true;
+                        break;
+                    }
                 }
-                
+
+                // Skip if no template variables found
+                if (!hasTemplateVars) {
+                    continue;
+                }
+
+                var updatedText = templateText;
+                var dataValue = "";
+
+                // Replace all template variables and track which value to store
+                for (var variable in templateVars) {
+                    if (templateText.indexOf(variable) !== -1) {
+                        updatedText = updatedText.replace(new RegExp(escapeRegExp(variable), 'g'), templateVars[variable]);
+                        // Store the raw value (without "mm" suffix for lens)
+                        if (variable === "{{artist}}") dataValue = artist || "";
+                        else if (variable === "{{lens}}") dataValue = lens || "";
+                        else if (variable === "{{comment}}") dataValue = comment || "";
+                    }
+                }
+
+                // Update the comment field with template;value format
+                layer.comment = templateText + ";" + dataValue;
+
                 // Update the text content only if it changed
                 if (updatedText !== sourceText.value.text) {
                     var textDoc = sourceText.value;
@@ -566,15 +556,49 @@
         return null;
     }
     
-    // Get unique project identifier for preferences
-    function getProjectId() {
-        if (app.project.file) {
-            // Use full file path as unique identifier
-            return app.project.file.fsName;
-        } else {
-            // For unsaved projects, return empty string (no preferences saved/loaded)
-            return "";
+    // Extract current values from slate comp text layers
+    function getSlateValues() {
+        var slateComp = findCompByName(SLATE_TEMPLATE_NAME);
+        if (!slateComp) {
+            return {artist: "", lens: "", comment: ""};
         }
+
+        var values = {
+            artist: "",
+            lens: "",
+            comment: ""
+        };
+
+        // Search through text layers for ones with semicolon-delimited data in comments
+        for (var i = 1; i <= slateComp.numLayers; i++) {
+            var layer = slateComp.layer(i);
+
+            if (layer instanceof TextLayer && layer.comment) {
+                var commentField = layer.comment;
+
+                // Parse comment field: template;value
+                if (commentField.indexOf(";") !== -1) {
+                    var parts = commentField.split(";");
+                    var templateText = parts[0];
+                    var dataValue = parts[1] || "";
+
+                    // Check which template variable this layer contains
+                    if (templateText.indexOf("{{artist}}") !== -1) {
+                        values.artist = dataValue;
+                    }
+
+                    if (templateText.indexOf("{{lens}}") !== -1) {
+                        values.lens = dataValue;
+                    }
+
+                    if (templateText.indexOf("{{comment}}") !== -1) {
+                        values.comment = dataValue;
+                    }
+                }
+            }
+        }
+
+        return values;
     }
     
     // Version up project file
